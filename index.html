@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>Titan.js - Advanced 2D Physics Engine</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow-x: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          sans-serif;
+        background: radial-gradient(
+          ellipse at center,
+          #1a1a1a 0%,
+          #000000 100%
+        );
+        color: #ffffff;
+        line-height: 1.6;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      /* Header */
+      .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        backdrop-filter: blur(20px);
+        background: rgba(0, 0, 0, 0.8);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .logo {
+        font-size: clamp(1.2rem, 4vw, 1.8rem);
+        font-weight: 700;
+        background: linear-gradient(135deg, #00d4ff 0%, #ff00aa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.02em;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 32px;
+        list-style: none;
+      }
+
+      .nav-links a {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+        font-size: 0.9rem;
+      }
+
+      .nav-links a:hover {
+        color: #00d4ff;
+      }
+
+      .mobile-menu {
+        display: none;
+        flex-direction: column;
+        gap: 4px;
+        cursor: pointer;
+      }
+
+      .mobile-menu span {
+        width: 24px;
+        height: 2px;
+        background: #ffffff;
+        transition: all 0.3s ease;
+      }
+
+      /* Hero Section */
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(
+            circle at 20% 50%,
+            rgba(0, 212, 255, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 20%,
+            rgba(255, 0, 170, 0.1) 0%,
+            transparent 50%
+          );
+        z-index: -1;
+      }
+
+      .hero-content {
+        z-index: 1;
+      }
+
+      .hero h1 {
+        font-size: clamp(2.5rem, 8vw, 5rem);
+        font-weight: 800;
+        margin-bottom: 24px;
+        background: linear-gradient(
+          135deg,
+          #ffffff 0%,
+          rgba(255, 255, 255, 0.8) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+
+      .hero .subtitle {
+        font-size: clamp(1rem, 3vw, 1.5rem);
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 40px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .cta-buttons {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 12px 32px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #00d4ff 0%, #ff00aa 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+      }
+
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+      }
+
+      /* Section Base Styles */
+      .section {
+        padding: 100px 0;
+        position: relative;
+      }
+
+      .section-title {
+        font-size: clamp(2rem, 6vw, 3rem);
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 60px;
+        background: linear-gradient(
+          135deg,
+          #ffffff 0%,
+          rgba(255, 255, 255, 0.8) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.02em;
+      }
+
+      /* Features Section */
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 32px;
+        margin-top: 60px;
+      }
+
+      .feature-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 32px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .feature-card:hover {
+        transform: translateY(-8px);
+        border-color: rgba(0, 212, 255, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      .feature-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #00d4ff 0%, #ff00aa 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        font-size: 24px;
+      }
+
+      .feature-card h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: #ffffff;
+      }
+
+      .feature-card p {
+        color: rgba(255, 255, 255, 0.7);
+        line-height: 1.6;
+      }
+
+      /* Demos Section */
+      .demos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 32px;
+        margin-top: 60px;
+      }
+
+      .demo-card {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 0, 0, 0.8) 0%,
+          rgba(0, 0, 0, 0.9) 100%
+        );
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+      }
+
+      .demo-card:hover {
+        transform: translateY(-8px);
+        border-color: rgba(0, 212, 255, 0.5);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+      }
+
+      .demo-preview {
+        width: 100%;
+        height: 250px;
+        background: linear-gradient(
+            45deg,
+            #000000 25%,
+            transparent 25%,
+            transparent 75%,
+            #000000 75%,
+            #000000
+          ),
+          linear-gradient(
+            45deg,
+            #000000 25%,
+            transparent 25%,
+            transparent 75%,
+            #000000 75%,
+            #000000
+          );
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 3rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .demo-preview::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+      }
+
+      .demo-preview span {
+        z-index: 1;
+        position: relative;
+      }
+
+      .demo-content {
+        padding: 24px;
+      }
+
+      .demo-content h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #ffffff;
+      }
+
+      .demo-content p {
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 20px;
+        line-height: 1.5;
+      }
+
+      .demo-actions {
+        display: flex;
+        gap: 12px;
+      }
+
+      .btn-small {
+        padding: 8px 20px;
+        font-size: 0.875rem;
+        border-radius: 6px;
+      }
+
+      /* Stats Section */
+      .stats {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 60px 40px;
+        backdrop-filter: blur(10px);
+        margin: 80px 0;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 40px;
+        text-align: center;
+      }
+
+      .stat-item h3 {
+        font-size: 3rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #00d4ff 0%, #ff00aa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+      }
+
+      .stat-item p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.1rem;
+        font-weight: 500;
+      }
+
+      /* Footer */
+      .footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        padding: 40px 0;
+        text-align: center;
+      }
+
+      .footer-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 40px;
+        margin-bottom: 40px;
+      }
+
+      .footer-section h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #ffffff;
+      }
+
+      .footer-section a {
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        display: block;
+        margin-bottom: 8px;
+        transition: color 0.3s ease;
+      }
+
+      .footer-section a:hover {
+        color: #00d4ff;
+      }
+
+      .footer-bottom {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 20px;
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      /* Demo Filters */
+      .demo-filters {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 40px;
+        padding: 0 20px;
+      }
+
+      .filter-btn {
+        padding: 10px 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 25px;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(10px);
+      }
+
+      .filter-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+        transform: translateY(-2px);
+      }
+
+      .filter-btn.active {
+        background: linear-gradient(135deg, #00d4ff 0%, #ff00aa 100%);
+        color: #ffffff;
+        border-color: transparent;
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+      }
+
+      /* Demo Badge */
+      .demo-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: linear-gradient(135deg, #00d4ff 0%, #ff00aa 100%);
+        color: #ffffff;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: 12px;
+        z-index: 2;
+      }
+
+      .demo-card.featured {
+        border-color: rgba(0, 212, 255, 0.3);
+        background: linear-gradient(
+          135deg,
+          rgba(0, 212, 255, 0.05) 0%,
+          rgba(255, 0, 170, 0.05) 100%
+        );
+      }
+
+      /* Demo Filtering Animation */
+      .demo-card {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .demo-card.hidden {
+        display: none;
+      }
+
+      .demo-card.visible {
+        display: block;
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      /* Load More Button */
+      .load-more-section {
+        text-align: center;
+        margin-top: 40px;
+      }
+
+      /* Demo Count Badge */
+      .demo-count {
+        display: inline-block;
+        background: rgba(0, 212, 255, 0.2);
+        color: #00d4ff;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 8px;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .nav-links {
+          display: none;
+        }
+
+        .mobile-menu {
+          display: flex;
+        }
+
+        .hero {
+          padding: 80px 0 60px;
+        }
+
+        .section {
+          padding: 60px 0;
+        }
+
+        .features-grid,
+        .demos-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .cta-buttons {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .btn {
+          width: 100%;
+          max-width: 300px;
+          justify-content: center;
+        }
+
+        .stats {
+          padding: 40px 20px;
+          margin: 40px 0;
+        }
+
+        .stats-grid {
+          gap: 30px;
+        }
+
+        .footer-content {
+          grid-template-columns: 1fr;
+          text-align: left;
+          gap: 30px;
+        }
+      }
+
+      /* Animations */
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .floating {
+        animation: float 6s ease-in-out infinite;
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #00d4ff 0%, #ff00aa 100%);
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="header">
+      <nav class="nav">
+        <div class="logo">Titan.js</div>
+        <ul class="nav-links">
+          <li><a href="#home">Home</a></li>
+          <li><a href="#demos">Demos</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#docs">Docs</a></li>
+          <li><a href="#download">Download</a></li>
+        </ul>
+        <div class="mobile-menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+      <div class="hero-content floating">
+        <h1>Titan.js</h1>
+        <p class="subtitle">
+          A high-performance 2D physics engine built for modern web
+          applications. Create stunning simulations with realistic collisions,
+          constraint dynamics, and particle systems.
+        </p>
+        <div class="cta-buttons">
+          <a href="#demos" class="btn btn-primary"> 🚀 Try Live Demos </a>
+          <a
+            href="https://github.com/PhyG0/Titan/tree/main"
+            class="btn btn-secondary"
+          >
+            📦 Github</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="section">
+      <div class="container">
+        <h2 class="section-title">Powerful Features</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3>High Performance</h3>
+            <p>
+              Optimized collision detection algorithms and efficient spatial
+              partitioning for smooth 60fps simulations even with hundreds of
+              objects.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🔄</div>
+            <h3>Realistic Physics</h3>
+            <p>
+              Advanced constraint solving, friction models, and energy
+              conservation create believable physical interactions and
+              behaviors.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <h3>Precise Collisions</h3>
+            <p>
+              Accurate collision detection with support for complex polygons,
+              circles, and compound shapes with perfect response.
+            </p>
+          </div>
+          <!-- <div class="feature-card">
+            <div class="feature-icon">💧</div>
+            <h3>Fluid Simulation</h3>
+            <p>
+              Built-in particle-based fluid dynamics with surface tension,
+              viscosity, and realistic wave propagation effects.
+            </p>
+          </div> -->
+          <div class="feature-card">
+            <div class="feature-icon">🎨</div>
+            <h3>Easy Integration</h3>
+            <p>
+              Simple API design with comprehensive documentation and examples.
+              Works seamlessly with Canvas, WebGL, and popular frameworks.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🔧</div>
+            <h3>Highly Configurable</h3>
+            <p>
+              Fine-tune gravity, damping, material properties, and solver
+              parameters to achieve the exact behavior you need.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="section">
+      <div class="container">
+        <div class="stats">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <h3>60</h3>
+              <p>FPS Performance</p>
+            </div>
+            <div class="stat-item">
+              <h3>1000+</h3>
+              <p>Objects Supported</p>
+            </div>
+            <div class="stat-item">
+              <h3>25KB</h3>
+              <p>Minified Size</p>
+            </div>
+            <div class="stat-item">
+              <h3>99%</h3>
+              <p>Accuracy Rate</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Demos Section -->
+    <section id="demos" class="section">
+      <div class="container">
+        <h2 class="section-title">Featured Demos</h2>
+        <p
+          style="
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+          "
+        >
+          Explore the most popular demonstrations of Titan.js's capabilities
+        </p>
+        <div class="demos-grid">
+          <div class="demo-card featured" data-category="collisions">
+            <div class="demo-preview">
+              <span>🎱</span>
+              <div class="demo-badge">Featured</div>
+            </div>
+            <div class="demo-content">
+              <h3>Circle Vs Circle Collision Detection</h3>
+              <p>
+                Interactive demo showcasing various collision scenarios with two
+                circles.
+              </p>
+              <div class="demo-actions">
+                <a
+                  href="./test/circle-vs-circle/index.html"
+                  class="btn btn-primary btn-small"
+                  >Launch Demo</a
+                >
+                <a href="#" class="btn btn-secondary btn-small">View Code</a>
+              </div>
+            </div>
+          </div>
+          <div class="demo-card featured" data-category="fluids">
+            <div class="demo-preview">
+              <span>🌊</span>
+              <div class="demo-badge">Featured</div>
+            </div>
+            <div class="demo-content">
+              <h3>Polygon vs Polygon</h3>
+              <p>
+                Interactive demo showcasing various collision scenarios with two
+                polygons.
+              </p>
+              <div class="demo-actions">
+                <a
+                  href="./test/polygon-vs-polygon/index.html"
+                  class="btn btn-primary btn-small"
+                  >Launch Demo</a
+                >
+                <a href="#" class="btn btn-secondary btn-small">View Code</a>
+              </div>
+            </div>
+          </div>
+          <div class="demo-card featured" data-category="constraints">
+            <div class="demo-preview">
+              <span>🏗️</span>
+              <div class="demo-badge">Featured</div>
+            </div>
+            <div class="demo-content">
+              <h3>Circle vs Polygon</h3>
+              <p>
+                Interactive demo showcasing various collision scenarios with
+                Circle and Polygon.
+              </p>
+              <div class="demo-actions">
+                <a
+                  href="./test/circle-vs-rectangle/index.html"
+                  class="btn btn-primary btn-small"
+                  >Launch Demo</a
+                >
+                <a href="#" class="btn btn-secondary btn-small">View Code</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- <div style="text-align: center; margin-top: 40px">
+          <a
+            href="#all-demos"
+            class="btn btn-secondary"
+            style="padding: 12px 32px"
+          >
+            🚀 View All Demos (25+)
+          </a>
+        </div> -->
+      </div>
+    </section>
+
+    <!-- All Demos Section -->
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h4>Getting Started</h4>
+            <a href="#">Quick Start Guide</a>
+            <a href="#">Installation</a>
+            <a href="#">Basic Examples</a>
+            <a href="#">API Reference</a>
+          </div>
+          <div class="footer-section">
+            <h4>Resources</h4>
+            <a href="#">Documentation</a>
+            <a href="#">Tutorials</a>
+            <a href="#">Community Forum</a>
+            <a href="#">GitHub Repository</a>
+          </div>
+          <div class="footer-section">
+            <h4>Support</h4>
+            <a href="#">Bug Reports</a>
+            <a href="#">Feature Requests</a>
+            <a href="#">Discord Server</a>
+            <a href="#">Contact</a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>
+            &copy; 2025 Titan.js. Built with ❤️ for the web development
+            community.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Smooth scrolling for navigation links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault()
+          const target = document.querySelector(this.getAttribute('href'))
+          if (target) {
+            target.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            })
+          }
+        })
+      })
+
+      // Header scroll effect
+      let lastScroll = 0
+      window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset
+        const header = document.querySelector('.header')
+
+        if (currentScroll > 100) {
+          header.style.background = 'rgba(0, 0, 0, 0.95)'
+          header.style.backdropFilter = 'blur(20px)'
+        } else {
+          header.style.background = 'rgba(0, 0, 0, 0.8)'
+          header.style.backdropFilter = 'blur(10px)'
+        }
+
+        lastScroll = currentScroll
+      })
+
+      // Mobile menu toggle
+      const mobileMenu = document.querySelector('.mobile-menu')
+      const navLinks = document.querySelector('.nav-links')
+
+      mobileMenu.addEventListener('click', () => {
+        navLinks.style.display =
+          navLinks.style.display === 'flex' ? 'none' : 'flex'
+      })
+
+      // Add interactive hover effects to demo cards
+      document.querySelectorAll('.demo-card').forEach((card) => {
+        card.addEventListener('mouseenter', () => {
+          card.style.transform = 'translateY(-12px) scale(1.02)'
+        })
+
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'translateY(0) scale(1)'
+        })
+      })
+
+      // Animate stats on scroll
+      const observeStats = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const statNumbers = entry.target.querySelectorAll('.stat-item h3')
+            statNumbers.forEach((stat) => {
+              const finalValue = stat.textContent
+              const numericValue = parseInt(finalValue.replace(/[^\d]/g, ''))
+              let currentValue = 0
+              const increment = numericValue / 60
+
+              const timer = setInterval(() => {
+                currentValue += increment
+                if (currentValue >= numericValue) {
+                  stat.textContent = finalValue
+                  clearInterval(timer)
+                } else {
+                  const displayValue = Math.floor(currentValue)
+                  const suffix = finalValue.replace(/^\d+/, '')
+                  stat.textContent = displayValue + suffix
+                }
+              }, 16)
+            })
+          }
+        })
+      })
+
+      const statsSection = document.querySelector('.stats')
+      if (statsSection) {
+        observeStats.observe(statsSection)
+      }
+
+      // Demo filtering functionality
+      const filterButtons = document.querySelectorAll('.filter-btn')
+      const demoCards = document.querySelectorAll('#all-demos-grid .demo-card')
+
+      filterButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          // Update active button
+          filterButtons.forEach((btn) => btn.classList.remove('active'))
+          button.classList.add('active')
+
+          const filterValue = button.getAttribute('data-filter')
+
+          // Filter demos
+          demoCards.forEach((card) => {
+            const category = card.getAttribute('data-category')
+
+            if (filterValue === 'all' || category === filterValue) {
+              card.classList.remove('hidden')
+              card.classList.add('visible')
+            } else {
+              card.classList.add('hidden')
+              card.classList.remove('visible')
+            }
+          })
+
+          // Update demo count in button text
+          setTimeout(() => {
+            const visibleCount = document.querySelectorAll(
+              '#all-demos-grid .demo-card.visible'
+            ).length
+            const countBadge = button.querySelector('.demo-count')
+            if (countBadge) {
+              countBadge.textContent = visibleCount
+            } else {
+              button.innerHTML =
+                button.textContent +
+                `<span class="demo-count">${visibleCount}</span>`
+            }
+          }, 200)
+        })
+      })
+
+      // Initialize demo counts
+      document.addEventListener('DOMContentLoaded', () => {
+        filterButtons.forEach((button) => {
+          const filterValue = button.getAttribute('data-filter')
+          let count = 0
+
+          if (filterValue === 'all') {
+            count = demoCards.length
+          } else {
+            count = document.querySelectorAll(
+              `#all-demos-grid .demo-card[data-category="${filterValue}"]`
+            ).length
+          }
+
+          if (count > 0) {
+            button.innerHTML =
+              button.textContent + `<span class="demo-count">${count}</span>`
+          }
+        })
+      })
+
+      // Initialize all demos as visible
+      demoCards.forEach((card) => {
+        card.classList.add('visible')
+      })
+    </script>
+  </body>
+</html>
