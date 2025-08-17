@@ -41,9 +41,6 @@ export function DetectPolyVsCircle(e1, e2) {
   )
   if (info.sp == undefined) return [{ collide: false }]
   e1SupportPoints.push(info)
-  // let info2 = e1._FindSupportPoint(normal, e2.center.Add(normal.Scale(-e2.radius)));
-  // if(info2.sp == undefined) return [{ collide : false }];
-  // e1SupportPoints.push(info2);
   let max = Infinity
   let index = null
   for (let i = 0; i < e1SupportPoints.length; i++) {
@@ -58,4 +55,42 @@ export function DetectPolyVsCircle(e1, e2) {
   }
   e1SupportPoints[index].collide = true
   return [e1SupportPoints[index]]
+}
+
+export function DetectPolyVsPoly(e1, e2) {
+  let e1SupportPoints = []
+  let e1FaceNormals = e1._GetFaceNormals()
+  let e2FaceNormals = e2._GetFaceNormals()
+  for (let i = 0; i < e1FaceNormals.length; i++) {
+    let spInfo = e2._FindSupportPoint(
+      e1FaceNormals[i].Scale(-1),
+      e1.vertices[i]
+    )
+    if (spInfo.sp == undefined) return [{ collide: false }]
+    e1SupportPoints[i] = spInfo
+  }
+  let e2SupportPoints = []
+  for (let i = 0; i < e2FaceNormals.length; i++) {
+    let spInfo = e1._FindSupportPoint(
+      e2FaceNormals[i].Scale(-1),
+      e2.vertices[i]
+    )
+    if (spInfo.sp == undefined) return [{ collide: false }]
+    e2SupportPoints[i] = spInfo
+  }
+  let result = e1SupportPoints.concat(e2SupportPoints)
+  let max = Infinity
+  let index = null
+  for (let i = 0; i < result.length; i++) {
+    if (result[i].depth < max) {
+      max = result[i].depth
+      index = i
+    }
+  }
+  let v = e2.center.Sub(e1.center)
+  if (Vector.Dot(v, result[index].n) > 0) {
+    result[index].n = result[index].n.Scale(-1)
+  }
+  result[index].collide = true
+  return [result[index]]
 }
