@@ -1,15 +1,13 @@
 import Screen from '../../2PS/core/canvas/screen.js'
-import Circle from '../../2PS/core/geometry/circle.js'
 import Vector from '../../2PS/core/util/vector.js'
 import Camera from '../../2PS/core/canvas/camera.js'
 import InfoBox from '../../2PS/core/canvas/info.js'
 import Manifold from '../../2PS/core/collision/manifold.js'
-import Rectangle from '../../2PS/core/geometry/rectangle.js'
 import Polygon from '../../2PS/core/geometry/polygon.js'
-import { DetectPolyVsCircle } from '../../2PS/core/collision/detection.js'
+import { DetectPolyVsPoly } from '../../2PS/core/collision/detection.js'
 
 let main = new Screen(1000, 600)
-main.setTitle('Circle vs Rectangle Collision Detection')
+main.setTitle('Polygon vs Polygon Collision Detection')
 main.setDescription('Using Separating Axis Theorem with Support Points')
 
 let ctx = main.getContext()
@@ -20,24 +18,26 @@ let camera = new Camera({
   zoom: 1.5,
 })
 
-let circle = new Circle(new Vector(-150, 0), 60, {
-  fillStyle: 'red',
-  strokeStyle: 'white',
-  lineWidth: 2,
-})
+let rectangle1 = new Polygon(new Vector(-100, 0), 4, 50)
 
-let rectangle = new Rectangle(new Vector(50, 0), 100, 100)
-
-let polygon = new Polygon(new Vector(200, 0), 3, 50)
+let rectangle2 = new Polygon(new Vector(100, 0), 3, 50)
 
 let infoBox = new InfoBox(ctx, new Vector(0, 0), {
   Zoom: 'q/e',
   'Toggle Free Look': 't',
   'Camera Controls': 'a/w/s/d',
-  'Control the circle': 'Arrow Keys',
+  'Control the Rectangle': 'Arrow Keys',
+  'Rotate the rectangle': 'i/o',
 })
 
-let moment = { left: false, right: false, up: false, down: false }
+let moment = {
+  left: false,
+  right: false,
+  up: false,
+  down: false,
+  rotateleft: false,
+  rotateright: false,
+}
 let speed = 100
 
 window.addEventListener('keydown', (e) => {
@@ -52,6 +52,17 @@ window.addEventListener('keyup', (e) => {
   if (e.key === 'ArrowRight') moment.right = false
   if (e.key === 'ArrowUp') moment.up = false
   if (e.key === 'ArrowDown') moment.down = false
+})
+
+// for rotating
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'i') moment.rotateleft = true
+  if (e.key === 'o') moment.rotateright = true
+})
+
+window.addEventListener('keyup', (e) => {
+  if (e.key === 'i') moment.rotateleft = false
+  if (e.key === 'o') moment.rotateright = false
 })
 
 function draw(ctx) {
@@ -75,16 +86,15 @@ function draw(ctx) {
       ctx.stroke()
     }
 
-    rectangle.Draw(ctx)
-    circle.Draw(ctx)
-    polygon.Draw(ctx)
+    rectangle1.Draw(ctx)
+    rectangle2.Draw(ctx)
   })
 
   infoBox.draw()
 }
 
 function update(dt) {
-  let collisionInfo = DetectPolyVsCircle(rectangle, circle)
+  let collisionInfo = DetectPolyVsPoly(rectangle2, rectangle1)
   let isColliding = collisionInfo[0].collide
   if (isColliding) {
     let mf = new Manifold()
@@ -95,35 +105,19 @@ function update(dt) {
   }
   if (isColliding) {
     infoBox.addInfo(
-      'Collision Depth [square]',
-      DetectPolyVsCircle(rectangle, circle)[0].depth.toFixed(1)
+      'Collision Depth',
+      DetectPolyVsPoly(rectangle2, rectangle1)[0].depth.toFixed(1)
     )
   } else {
     infoBox.removeInfo('Collision Depth')
   }
 
-  let collisionInfoPoly = DetectPolyVsCircle(polygon, circle)
-  let isCollidingPoly = collisionInfoPoly[0].collide
-  if (isCollidingPoly) {
-    let mf = new Manifold()
-    mf.depth = collisionInfoPoly[0].depth
-    mf.normal = collisionInfoPoly[0].n
-    mf.points.push(collisionInfoPoly[0].sp)
-    mf.show(camera, ctx)
-  }
-  if (isCollidingPoly) {
-    infoBox.addInfo(
-      'Collision Depth [triangle]',
-      DetectPolyVsCircle(polygon, circle)[0].depth.toFixed(1)
-    )
-  } else {
-    infoBox.removeInfo('Collision Depth')
-  }
-
-  if (moment.left) circle.Translate(new Vector(-speed * dt, 0))
-  if (moment.right) circle.Translate(new Vector(speed * dt, 0))
-  if (moment.up) circle.Translate(new Vector(0, -speed * dt))
-  if (moment.down) circle.Translate(new Vector(0, speed * dt))
+  if (moment.left) rectangle1.Translate(new Vector(-speed * dt, 0))
+  if (moment.right) rectangle1.Translate(new Vector(speed * dt, 0))
+  if (moment.up) rectangle1.Translate(new Vector(0, -speed * dt))
+  if (moment.down) rectangle1.Translate(new Vector(0, speed * dt))
+  if (moment.rotateleft) rectangle1.Rotate(5 * dt)
+  if (moment.rotateright) rectangle1.Rotate(-5 * dt)
 
   camera.Follow()
 }
