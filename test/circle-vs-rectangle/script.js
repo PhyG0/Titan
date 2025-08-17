@@ -4,11 +4,12 @@ import Vector from '../../2PS/core/util/vector.js'
 import Camera from '../../2PS/core/canvas/camera.js'
 import InfoBox from '../../2PS/core/canvas/info.js'
 import Manifold from '../../2PS/core/collision/manifold.js'
-import { DetectCircleVsCircle } from '../../2PS/core/collision/detection.js'
+import Rectangle from '../../2PS/core/geometry/rectangle.js'
+import { DetectPolyVsCircle } from '../../2PS/core/collision/detection.js'
 
 let main = new Screen(1000, 600)
-main.setTitle('Circle vs Circle Collision Detection')
-main.setDescription('')
+main.setTitle('Circle vs Rectangle Collision Detection')
+main.setDescription('Using Separating Axis Theorem with Support Points')
 
 let ctx = main.getContext()
 
@@ -21,15 +22,10 @@ let camera = new Camera({
 let circle = new Circle(new Vector(-100, 0), 60, {
   fillStyle: 'red',
   strokeStyle: 'white',
-  lineWidth: 1,
-})
-let circle2 = new Circle(new Vector(100, 0), 50, {
-  fillStyle: 'blue',
-  strokeStyle: 'white',
-  lineWidth: 1,
+  lineWidth: 2,
 })
 
-camera.SetTarget(circle)
+let rectangle = new Rectangle(new Vector(100, 0), 100, 100)
 
 let infoBox = new InfoBox(ctx, new Vector(0, 0), {
   Zoom: 'q/e',
@@ -56,7 +52,6 @@ window.addEventListener('keyup', (e) => {
 })
 
 function draw(ctx) {
-  ctx.clearRect(0, 0, main.width, main.height)
   ctx.fillStyle = 'black'
   ctx.fillRect(0, 0, main.width, main.height)
 
@@ -77,7 +72,7 @@ function draw(ctx) {
       ctx.stroke()
     }
 
-    circle2.Draw(ctx)
+    rectangle.Draw(ctx)
     circle.Draw(ctx)
   })
 
@@ -85,7 +80,7 @@ function draw(ctx) {
 }
 
 function update(dt) {
-  let collisionInfo = DetectCircleVsCircle(circle, circle2)
+  let collisionInfo = DetectPolyVsCircle(rectangle, circle)
   let isColliding = collisionInfo[0].collide
   if (isColliding) {
     let mf = new Manifold()
@@ -97,7 +92,7 @@ function update(dt) {
   if (isColliding) {
     infoBox.addInfo(
       'Collision Depth',
-      DetectCircleVsCircle(circle, circle2)[0].depth.toFixed(1)
+      DetectPolyVsCircle(rectangle, circle)[0].depth.toFixed(1)
     )
   } else {
     infoBox.removeInfo('Collision Depth')
@@ -113,6 +108,7 @@ function update(dt) {
 
 function loop() {
   main._resize()
+  ctx.clearRect(0, 0, main.width, main.height)
   draw(ctx)
   update(0.016)
   requestAnimationFrame(loop)
