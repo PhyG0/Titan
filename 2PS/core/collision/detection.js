@@ -94,3 +94,26 @@ export function DetectPolyVsPoly(e1, e2) {
   result[index].collide = true
   return [result[index]]
 }
+
+
+export function Detect(e1, e2){
+    let detection;
+    if(e1.type == "polygon" && e2.type == "polygon"){
+        detection =  DetectPolyVsPoly(e1, e2);
+    }
+    if(e1.type == "polygon" && e2.type == "circle"){
+        detection = DetectPolyVsCircle(e1, e2);
+        if(detection[0].collide){
+            detection[0].n = detection[0].n.Scale(-1);
+        }
+    }
+    if(e1.type == "circle" && e2.type == "polygon"){
+        detection = DetectPolyVsCircle(e2, e1);
+    }
+    if(e1.type == "circle" && e2.type == "circle"){
+        detection = DetectCircleVsCircle(e1, e2);
+    }
+    if(detection) return detection;
+    return [{ collide : false }];
+}
+

@@ -60,6 +60,11 @@ class Circle extends Body {
     ctx.lineWidth = this.config.lineWidth
     ctx.strokeStyle = this.config.strokeStyle
     ctx.stroke()
+    ctx.beginPath();
+    ctx.moveTo(this.center.x, this.center.y);
+    ctx.lineTo(this.center.x + Math.cos(this.angle) * this.radius, this.center.y + this.radius * Math.sin(this.angle));
+    ctx.closePath();
+    ctx.stroke();
   }
 }
 
