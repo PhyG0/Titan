@@ -24,11 +24,8 @@ class Rectangle extends Body {
         this.center.y + this.height / 2
       ),
     ]
-    this.boundingRect = {
-      width: Math.sqrt(width * width + height * height),
-      height: Math.sqrt(width * width + height * height),
-    }
     this.type = 'polygon'
+    this.inertia = this.mass * (this.width * this.width + this.height * this.height) / 12;
   }
 }
 

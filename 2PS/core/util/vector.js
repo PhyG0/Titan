@@ -24,6 +24,9 @@ class Vector {
   AddScaled(vector, k) {
     return new Vector(this.x + vector.x * k, this.y + vector.y * k)
   }
+  Copy() {
+    return new Vector(this.x, this.y);
+  }
   Rotate(angle, center = new Vector(0, 0)) {
     let x = this.x - center.x
     let y = this.y - center.y

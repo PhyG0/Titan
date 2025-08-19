@@ -4,12 +4,11 @@ import Vector from '../../2PS/core/util/vector.js'
 import Camera from '../../2PS/core/canvas/camera.js'
 import InfoBox from '../../2PS/core/canvas/info.js'
 import Rectangle from '../../2PS/core/geometry/rectangle.js'
-import { random } from '../../2PS/core/util/math.js'
 import { Detect } from '../../2PS/core/collision/detection.js'
-import { LinearResolve, PositionalCorrection, Resolve } from '../../2PS/core/collision/resolution.js'
+import { Resolve, PositionalCorrection } from '../../2PS/core/collision/resolution.js'
 
 let main = new Screen(1000, 600)
-main.setTitle('Stack of Balls - Linear Impulse')
+main.setTitle('Rotational Resolution Test')
 main.setDescription('')
 
 let ctx = main.getContext()
@@ -20,59 +19,46 @@ let camera = new Camera({
   zoom: 1,
 })
 
+let infoBox = new InfoBox(ctx, new Vector(0, 0), {
+  Zoom: 'q/e',
+  'Toggle Free Look': 't',
+  'Camera Controls': 'a/w/s/d',
+})
 
 let objects = []
 
-for(let i = 0; i < 50; i++) {
-    let circle = new Circle(new Vector(random(-300, 300), random(-300, 200)), 40, {
-        strokeStyle: 'white',
-        lineWidth: 2
-    })
-    objects.push(circle);
-}
-
-
 let leftWall = new Rectangle(new Vector(-camera.offSet.x, -camera.offSet.y / 2 + 150), 30, 2 * camera.offSet.y)
 leftWall.mass = 0;
-leftWall.inertia = 0;
+leftWall.inertia = 0
 leftWall.isStatic = true;
 objects.push(leftWall);
 
 let bottomWall = new Rectangle(new Vector(0, camera.offSet.y), 2 * camera.offSet.x, 30);
 bottomWall.mass = 0;
-bottomWall.inertia = 0;
+bottomWall.inertia = 0
 bottomWall.isStatic = true;
 objects.push(bottomWall)
 
 let rightWall = new Rectangle(new Vector(camera.offSet.x, -camera.offSet.y / 2 + 150), 30, 2 * camera.offSet.y)
 rightWall.mass = 0;
-rightWall.inertia = 0;
+rightWall.inertia = 0
 rightWall.isStatic = true;
 objects.push(rightWall);
 
-let infoBox = new InfoBox(ctx, new Vector(0, 0), {
-  Zoom: 'q/e',
-  'Toggle Free Look': 't',
-  'Camera Controls': 'a/w/s/d',
-  'Control the circle': 'Arrow Keys',
-})
 
-let moment = { left: false, right: false, up: false, down: false }
-let speed = 3000
+let r = new Rectangle(new Vector(-170, 100), 450, 30);
+r.mass = 0;
+r.isStatic = true;
+r.inertia = 0;
+r.Rotate(0.5)
 
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowLeft') moment.left = true
-  if (e.key === 'ArrowRight') moment.right = true
-  if (e.key === 'ArrowUp') moment.up = true
-  if (e.key === 'ArrowDown') moment.down = true
-})
+objects.push(r)
 
-window.addEventListener('keyup', (e) => {
-  if (e.key === 'ArrowLeft') moment.left = false
-  if (e.key === 'ArrowRight') moment.right = false
-  if (e.key === 'ArrowUp') moment.up = false
-  if (e.key === 'ArrowDown') moment.down = false
-})
+let ball = new Circle(new Vector(-120, -50), 50)
+objects.push(ball)
+
+objects.push(new Rectangle(new Vector(-100, -100), 60, 160))
+
 
 function draw(ctx) {
   ctx.clearRect(0, 0, main.width, main.height)

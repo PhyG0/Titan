@@ -7,10 +7,6 @@ class Polygon extends Body {
     this.n = n
     this.size = size
     this.vertices = []
-    let minX = Infinity,
-      minY = Infinity
-    let maxX = -Infinity,
-      maxY = -Infinity
     this.type = 'polygon'
     for (let i = 0; i < n; i++) {
       this.vertices.push(
@@ -19,16 +15,44 @@ class Polygon extends Body {
           this.center.y + this.size * Math.sin(i * ((2 * Math.PI) / n))
         )
       )
-      if (this.vertices[i].x < minX) minX = this.vertices[i].x
-      if (this.vertices[i].y < minY) minY = this.vertices[i].y
-      if (this.vertices[i].x > maxX) maxX = this.vertices[i].x
-      if (this.vertices[i].y > maxY) maxY = this.vertices[i].y
     }
-    this.boundingRect = {
-      width: 2 * this.size,
-      height: 2 * this.size,
-    }
+    this.inertia = this.calculateInertia();
   }
+
+  calculateInertia() {
+      let area = 0;
+      let inertia = 0;
+
+      for (let i = 0; i < this.vertices.length; i++) {
+          let j = (i + 1) % this.vertices.length;
+
+          let xi = this.vertices[i].x - this.center.x;
+          let yi = this.vertices[i].y - this.center.y;
+          let xj = this.vertices[j].x - this.center.x;
+          let yj = this.vertices[j].y - this.center.y;
+
+          let cross = xi * yj - xj * yi;
+
+          area += cross;
+
+          inertia += cross * (
+              xi * xi + xi * xj + xj * xj +
+              yi * yi + yi * yj + yj * yj
+          );
+      }
+
+      area *= 0.5;
+
+      // Density = mass / area
+      let density = this.mass / area;
+
+      // Final polygon inertia about centroid
+      inertia = (density / 12) * inertia;
+
+      return Math.abs(inertia); 
+  }
+
+
 }
 
 export default Polygon

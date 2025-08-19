@@ -7,8 +7,8 @@ class Circle extends Body {
     radius = 40,
     config = {
       fillStyle: 'red',
-      strokeStyle: 'black',
-      lineWidth: 3,
+      strokeStyle: 'white',
+      lineWidth: 2,
       fill: false,
     }
   ) {
@@ -16,10 +16,8 @@ class Circle extends Body {
     this.radius = radius
     this.config = config
     this.type = 'circle'
-    this.boundingRect = {
-      width: 2.3 * this.radius,
-      height: 2.3 * this.radius,
-    }
+    this.inertia = 0.5 * this.mass * this.radius * this.radius;
+
   }
   _FindSupportPoint(n, ep) {
     let circVerts = []

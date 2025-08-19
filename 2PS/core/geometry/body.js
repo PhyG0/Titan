@@ -10,7 +10,7 @@ class Body {
     this.angularVelocity = 0
     this.angle = 0
     this.bounce = 0.5
-    this.friction = 0.1
+    this.friction = 0.2
     this.isStatic = false;
     if(this.mass == 0) this.isStatic = true;
 
@@ -53,69 +53,74 @@ class Body {
   // Runge–Kutta 4 integration
   // ------------------------------
   IntegrateRK4(dt) {
-    // Helper function for derivatives\
-    const derivative = (state, dt, d) => {
-      let newState = {
-        center: state.center.AddScaled(d.velocity, dt),
-        velocity: state.velocity.AddScaled(d.acceleration, dt),
-        angle: state.angle + d.angularVelocity * dt,
-        angularVelocity: state.angularVelocity + d.angularAcceleration * dt
-      }
+    // Store initial state
+    const initialCenter = this.center.Copy()
+    const initialVelocity = this.velocity.Copy()
+    const initialAngle = this.angle
+    const initialAngularVelocity = this.angularVelocity
 
-      let acc = this.forceAccumulator.Scale(this.inverseMass)
-      let angAcc = this.torqueAccumulator * this.inverseInertia
+    // Forces are constant over this timestep
+    const acceleration = this.forceAccumulator.Scale(this.inverseMass)
+    const angularAcceleration = this.torqueAccumulator * this.inverseInertia
 
-      return {
-        velocity: newState.velocity,
-        acceleration: acc,
-        angularVelocity: newState.angularVelocity,
-        angularAcceleration: angAcc
-      }
+    // k1 - derivatives at current state
+    const k1 = {
+      velocity: this.velocity.Copy(),
+      acceleration: acceleration.Copy(),
+      angularVelocity: this.angularVelocity,
+      angularAcceleration: angularAcceleration
     }
 
-    let state = {
-      center: this.center,
-      velocity: this.velocity,
-      angle: this.angle,
-      angularVelocity: this.angularVelocity
+    // k2 - derivatives at t + dt/2 using k1
+    const k2 = {
+      velocity: initialVelocity.AddScaled(k1.acceleration, dt * 0.5),
+      acceleration: acceleration.Copy(),
+      angularVelocity: initialAngularVelocity + k1.angularAcceleration * dt * 0.5,
+      angularAcceleration: angularAcceleration
     }
 
-    // k1
-    let a = {
-      velocity: state.velocity,
-      acceleration: this.forceAccumulator.Scale(this.inverseMass),
-      angularVelocity: state.angularVelocity,
-      angularAcceleration: this.torqueAccumulator * this.inverseInertia
+    // k3 - derivatives at t + dt/2 using k2
+    const k3 = {
+      velocity: initialVelocity.AddScaled(k2.acceleration, dt * 0.5),
+      acceleration: acceleration.Copy(),
+      angularVelocity: initialAngularVelocity + k2.angularAcceleration * dt * 0.5,
+      angularAcceleration: angularAcceleration
     }
 
-    // k2, k3, k4
-    let b = derivative(state, dt * 0.5, a)
-    let c = derivative(state, dt * 0.5, b)
-    let d = derivative(state, dt, c)
+    // k4 - derivatives at t + dt using k3
+    const k4 = {
+      velocity: initialVelocity.AddScaled(k3.acceleration, dt),
+      acceleration: acceleration.Copy(),
+      angularVelocity: initialAngularVelocity + k3.angularAcceleration * dt,
+      angularAcceleration: angularAcceleration
+    }
 
-    // Weighted sums
-    let dxdt = state.velocity
-      .Add(a.velocity)
-      .AddScaled(b.velocity, 2)
-      .AddScaled(c.velocity, 2)
-      .Add(d.velocity)
+    // Calculate final changes using RK4 weighted average
+    const deltaVelocity = k1.acceleration
+      .AddScaled(k2.acceleration, 2)
+      .AddScaled(k3.acceleration, 2)
+      .Add(k4.acceleration)
       .Scale(dt / 6)
 
-    let dvdt = a.acceleration
-      .AddScaled(b.acceleration, 2)
-      .AddScaled(c.acceleration, 2)
-      .Add(d.acceleration)
-      .Scale(dt / 6)
+    const avgVelocity = k1.velocity
+      .AddScaled(k2.velocity, 2)
+      .AddScaled(k3.velocity, 2)
+      .Add(k4.velocity)
+      .Scale(1/6)
 
-    let dAngle = (a.angularVelocity + 2 * b.angularVelocity + 2 * c.angularVelocity + d.angularVelocity) * (dt / 6)
-    let dAngularVel = (a.angularAcceleration + 2 * b.angularAcceleration + 2 * c.angularAcceleration + d.angularAcceleration) * (dt / 6)
+    const deltaPosition = avgVelocity.Scale(dt)
 
-    // Apply updates
-    this.center = this.center.Add(dxdt)
-    this.velocity = this.velocity.Add(dvdt)
-    this.angle += dAngle
-    this.angularVelocity += dAngularVel
-    this.Rotate(dAngle)
+    const deltaAngularVelocity = (k1.angularAcceleration + 2*k2.angularAcceleration + 2*k3.angularAcceleration + k4.angularAcceleration) * (dt / 6)
+    const avgAngularVelocity = (k1.angularVelocity + 2*k2.angularVelocity + 2*k3.angularVelocity + k4.angularVelocity) / 6
+    const deltaAngle = avgAngularVelocity * dt
+
+    // Apply updates using your existing methods
+    this.velocity = initialVelocity.Add(deltaVelocity)
+    this.angularVelocity = initialAngularVelocity + deltaAngularVelocity
+    
+    // Use your Translate and Rotate methods (they handle vertices automatically)
+    this.Translate(deltaPosition)
+    this.Rotate(deltaAngle, this.center)
 
     // Clear accumulators
     this.forceAccumulator = new Vector(0, 0)
@@ -124,8 +129,9 @@ class Body {
 
 
   _MomentIntegration(dt) {
-    this.IntegrateRK4(dt)
-    this.velocity = this.velocity.Scale(0.99)
+    this.IntegrateEuler(dt)
+    // this.IntegrateEuler(dt);
+    this.velocity = this.velocity.Scale(0.999)
     this.angularVelocity *= 0.999
   }
 
