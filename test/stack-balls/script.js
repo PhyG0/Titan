@@ -3,14 +3,13 @@ import Circle from '../../2PS/core/geometry/circle.js'
 import Vector from '../../2PS/core/util/vector.js'
 import Camera from '../../2PS/core/canvas/camera.js'
 import InfoBox from '../../2PS/core/canvas/info.js'
-import Manifold from '../../2PS/core/collision/manifold.js'
 import Rectangle from '../../2PS/core/geometry/rectangle.js'
-import Polygon from '../../2PS/core/geometry/polygon.js';
+import { random } from '../../2PS/core/util/math.js'
 import { Detect } from '../../2PS/core/collision/detection.js'
 import { LinearResolve, PositionalCorrection } from '../../2PS/core/collision/resolution.js'
 
 let main = new Screen(1000, 600)
-main.setTitle('Collision Linear Resolution Test')
+main.setTitle('Stack of Balls - Linear Impulse')
 main.setDescription('')
 
 let ctx = main.getContext()
@@ -21,25 +20,17 @@ let camera = new Camera({
   zoom: 1,
 })
 
-let circle = new Circle(new Vector(-100, 0), 30, {
-  fillStyle: 'red',
-  strokeStyle: 'white',
-  lineWidth: 2,
-})
-let circle2 = new Circle(new Vector(100, 0), 40, {
-  fillStyle: 'blue',
-  strokeStyle: 'white',
-  lineWidth: 2,
-})
 
-let polygon = new Polygon(new Vector(200, 0), 3, 50)
+let objects = []
 
-let objects = [circle, circle2, polygon]
+for(let i = 0; i < 50; i++) {
+    let circle = new Circle(new Vector(random(-300, 300), random(-300, 200)), 40, {
+        strokeStyle: 'white',
+        lineWidth: 2
+    })
+    objects.push(circle);
+}
 
-let r = new Rectangle(new Vector(300, 200), 100, 150);
-r.mass = 10;
-
-objects.push(r)
 
 let leftWall = new Rectangle(new Vector(-camera.offSet.x, -camera.offSet.y / 2 + 150), 30, 2 * camera.offSet.y)
 leftWall.mass = 0;
@@ -56,8 +47,6 @@ rightWall.mass = 0;
 rightWall.isStatic = true;
 objects.push(rightWall);
 
-camera.SetTarget(circle)
-
 let infoBox = new InfoBox(ctx, new Vector(0, 0), {
   Zoom: 'q/e',
   'Toggle Free Look': 't',
@@ -66,7 +55,7 @@ let infoBox = new InfoBox(ctx, new Vector(0, 0), {
 })
 
 let moment = { left: false, right: false, up: false, down: false }
-let speed = 7000
+let speed = 3000
 
 window.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft') moment.left = true
@@ -107,34 +96,33 @@ function draw(ctx) {
     for(let i = 0; i < objects.length; i++) {
         objects[i].Draw(ctx);
     }
-    
+
   })
 
   infoBox.draw()
 }
 
+let gravity = new Vector(0, 500);
+
 function update(dt) {
 
   for(let i = 0; i < objects.length; i++) {
+    objects[i].AddForce(gravity);
     objects[i]._MomentIntegration(dt);
+
   }
 
-  for(let i = 0; i < objects.length; i++) {
-    for(let j = i + 1; j < objects.length; j++) {
-        let collisionInfo = Detect(objects[i], objects[j])
-        let isColliding = collisionInfo[0].collide
-        if (isColliding) {
-            let mf = new Manifold()
-            mf.depth = collisionInfo[0].depth
-            mf.normal = collisionInfo[0].n
-            mf.points.push(collisionInfo[0].sp)
-            mf.show(camera, ctx)
+  for(let i = 0; i < 3; i++) {
+    for(let i = 0; i < objects.length; i++) {
+        for(let j = i + 1; j < objects.length; j++) {
+            let info = Detect(objects[i], objects[j])[0];
+            if(info.collide) {
+                PositionalCorrection(objects[i], objects[j], info);
+                LinearResolve(objects[i], objects[j], info);
+            }
         }
-        PositionalCorrection(objects[i], objects[j], collisionInfo[0])
-        LinearResolve(objects[i], objects[j], collisionInfo[0])
     }
   }
-
 
   if (moment.left) circle.AddForce(new Vector(-speed * dt, 0))
   if (moment.right) circle.AddForce(new Vector(speed * dt, 0))
