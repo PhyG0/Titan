@@ -25,5 +25,19 @@ export function isEqual(value1, value2, error = 0.0001) {
 }
 
 export function ClipEdges(a1, a2, b1, b2, body1Vertices, body2Vertices) {
-    
+  let res = [];  
+  if(pointInPolygon(a1.x, a1.y, body2Vertices)) {
+    res.push(a1)
+  }
+  if(pointInPolygon(a2.x, a2.y, body2Vertices)) {
+    res.push(a2)
+  }
+  if(pointInPolygon(b1.x, b1.y, body1Vertices)) {
+    res.push(b1)
+  }
+  if(pointInPolygon(b2.x, b2.y, body1Vertices)) {
+    res.push(b2)
+  }
+
+  return res;
 }

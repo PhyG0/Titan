@@ -119,6 +119,12 @@ export function DetectPolyVsPoly(e1, e2) {
     e2.vertices
   )
 
+  if(points.length < 2) {
+    return [result[index]]
+  }
+
+  result[index].sp = points[0];
+  result[index2].sp = points[1]
 
   let v2 = e2.center.Sub(e1.center)
   if (Vector.Dot(v2, result[index2].n) > 0) {
