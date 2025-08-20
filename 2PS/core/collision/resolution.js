@@ -4,7 +4,7 @@ export function PositionalCorrection(e1, e2, info) {
     if(e1.isStatic && e2.isStatic) return;
     if(!info.collide) return;
 
-    let correctionPercentage = 0.4;
+    let correctionPercentage = 0.3;
     let amountToCorrect = info.depth / (e1.inverseMass + e2.inverseMass) * correctionPercentage;
     let correctionVector = info.n.Scale(-amountToCorrect)
 

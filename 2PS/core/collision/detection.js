@@ -1,4 +1,5 @@
 import Vector from '../util/vector.js'
+import { isEqual, ClipEdges } from '../util/math.js'
 
 export function DetectCircleVsCircle(e1, e2) {
   let rSum = e1.radius + e2.radius
@@ -67,7 +68,8 @@ export function DetectPolyVsPoly(e1, e2) {
       e1.vertices[i]
     )
     if (spInfo.sp == undefined) return [{ collide: false }]
-    e1SupportPoints[i] = spInfo
+    spInfo.edge = i 
+    e1SupportPoints.push(spInfo)
   }
   let e2SupportPoints = []
   for (let i = 0; i < e2FaceNormals.length; i++) {
@@ -76,23 +78,56 @@ export function DetectPolyVsPoly(e1, e2) {
       e2.vertices[i]
     )
     if (spInfo.sp == undefined) return [{ collide: false }]
-    e2SupportPoints[i] = spInfo
+    spInfo.edge = i
+    e2SupportPoints.push(spInfo)
   }
   let result = e1SupportPoints.concat(e2SupportPoints)
-  let max = Infinity
+  let min = Infinity
   let index = null
+  let index2 = null 
   for (let i = 0; i < result.length; i++) {
-    if (result[i].depth < max) {
-      max = result[i].depth
+    if (result[i].depth < min) {
+      min = result[i].depth
       index = i
+    }else if(isEqual(result[i].depth, min)) {
+      index2 = i 
     }
   }
+
   let v = e2.center.Sub(e1.center)
   if (Vector.Dot(v, result[index].n) > 0) {
     result[index].n = result[index].n.Scale(-1)
   }
   result[index].collide = true
-  return [result[index]]
+
+
+  if(!result[index2]) {
+    return [result[index]]
+  }
+
+  // Two contact points
+
+  let edge1 = result[index].edge
+  let edge2 = result[index2].edge
+
+  let points = ClipEdges(
+    e1.vertices[edge1],
+    e1.vertices[(edge1 + 1) % e1.vertices.length],
+    e2.vertices[edge2],
+    e2.vertices[(edge2 + 1) % e2.vertices.length],
+    e1.vertices,
+    e2.vertices
+  )
+
+
+  let v2 = e2.center.Sub(e1.center)
+  if (Vector.Dot(v2, result[index2].n) > 0) {
+    result[index2].n = result[index2].n.Scale(-1)
+  }
+    result[index2].collide = true
+
+    return [result[index], result[index2]]
+
 }
 
 

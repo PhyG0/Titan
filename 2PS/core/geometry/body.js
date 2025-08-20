@@ -129,8 +129,8 @@ class Body {
 
 
   _MomentIntegration(dt) {
-    this.IntegrateEuler(dt)
-    // this.IntegrateEuler(dt);
+    // this.IntegrateEuler(dt)
+    this.IntegrateRK4(dt);
     this.velocity = this.velocity.Scale(0.999)
     this.angularVelocity *= 0.999
   }
@@ -193,6 +193,8 @@ class Body {
     c.beginPath()
     c.moveTo(this.vertices[0].x, this.vertices[0].y)
     for (let i = 0; i < this.vertices.length; i++) {
+      c.fontSize = 10;
+      c.fillText(String(this.vertices[(i + 1) % this.vertices.length].x.toFixed(2)) + ", " + String(this.vertices[(i + 1) % this.vertices.length].y.toFixed(2)), this.vertices[(i + 1) % this.vertices.length].x, this.vertices[(i + 1) % this.vertices.length].y)
       c.lineTo(
         this.vertices[(i + 1) % this.vertices.length].x,
         this.vertices[(i + 1) % this.vertices.length].y
